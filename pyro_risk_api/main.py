@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 CAMERA_FIELDS = ("id", "name", "organization_id", "lat", "lon")
 
 
-def _enrich_with_fwi(cameras_raw: list[dict]) -> list[dict]:
-    now = datetime.now(timezone.utc)
+def _enrich_with_fwi(cameras_raw: list[dict], now: datetime) -> list[dict]:
     today = now.date()
     enriched: list[dict] = []
     for cam in cameras_raw:
@@ -39,10 +38,9 @@ def _enrich_with_fwi(cameras_raw: list[dict]) -> list[dict]:
     return enriched
 
 
-def _persist_scores(enriched: list[dict]) -> None:
+def _persist_scores(enriched: list[dict], now: datetime) -> None:
     if not enriched:
         return
-    now = datetime.now(timezone.utc)
     today = now.date()
     payload = [
         {
@@ -67,13 +65,14 @@ def _persist_scores(enriched: list[dict]) -> None:
 
 def refresh_cameras(app: FastAPI) -> None:
     try:
+        now = datetime.now(timezone.utc)
         client = build_client()
         raw = client.fetch_cameras().json()
         logger.info("fetched %d cameras from %s", len(raw), settings.pyro_api_host)
-        enriched = _enrich_with_fwi(raw)
+        enriched = _enrich_with_fwi(raw, now)
         app.state.cameras = enriched
         logger.info("FWI computed for %d cameras", len(enriched))
-        _persist_scores(enriched)
+        _persist_scores(enriched, now)
     except Exception:
         logger.exception("failed to refresh cameras")
 
