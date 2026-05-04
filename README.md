@@ -15,8 +15,8 @@ is sampled from the Copernicus EFFIS WMS layer (`mf010.fwi`, Météo-France 10 k
 | GET    | `/health`                           | none   | Liveness probe                                       |
 | GET    | `/cameras?organization_id=…`        | basic  | List cameras with current FWI; `organization_id` filter is optional |
 | GET    | `/cameras/{id}`                     | basic  | Single camera by id                                  |
-| GET    | `/scores/{date}?camera_id=…`        | basic  | Persisted scores for a single day; `camera_id` filter is optional |
-| POST   | `/scores/recompute?start=…&end=…`   | basic  | Schedule a recompute of FWI for every loaded camera over `[start, end]` (returns 202; runs in background) |
+| GET    | `/scores/{date}?camera_id=…&organization_id=…` | basic | Persisted scores for a single day; both filters optional |
+| POST   | `/scores/recompute?start=…&end=…&organization_id=…` | basic | Schedule a recompute over `[start, end]`; restrict to one org if given. Returns 202; runs in background |
 | GET    | `/docs`                             | none   | OpenAPI / Swagger UI                                 |
 
 Each camera payload:

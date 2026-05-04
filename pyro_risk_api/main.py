@@ -69,10 +69,9 @@ def _persist_scores(enriched: list[dict], now: datetime) -> None:
     logger.info("persisted %d FWI scores for %s", len(payload), today.isoformat())
 
 
-def recompute_range(app: FastAPI, start: date_, end: date_) -> None:
-    cams = app.state.cameras
+def recompute_range(cams: list[dict], start: date_, end: date_) -> None:
     if not cams:
-        logger.warning("recompute aborted: cameras not loaded")
+        logger.warning("recompute aborted: empty camera set")
         return
 
     total = 0

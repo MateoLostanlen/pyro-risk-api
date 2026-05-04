@@ -46,26 +46,40 @@ class Client:
         self,
         day: date | str,
         camera_id: int | None = None,
+        organization_id: int | None = None,
     ) -> list[dict]:
         """Return persisted FWI scores for a single day.
 
         Args:
             day: ISO ``YYYY-MM-DD`` string or ``date`` (UTC).
             camera_id: filter to a single camera id.
+            organization_id: filter to one organization.
         """
         params: dict[str, Any] = {}
         if camera_id is not None:
             params["camera_id"] = camera_id
+        if organization_id is not None:
+            params["organization_id"] = organization_id
         return self._get(f"scores/{day}", params=params or None)
 
-    def recompute_scores(self, start: date | str, end: date | str) -> dict:
-        """Schedule a recompute over a date range for every loaded camera.
+    def recompute_scores(
+        self,
+        start: date | str,
+        end: date | str,
+        organization_id: int | None = None,
+    ) -> dict:
+        """Schedule a recompute over a date range.
 
-        Returns immediately (HTTP 202); the work runs in the server scheduler.
+        Targets every loaded camera by default, or only the cameras of one
+        organization when ``organization_id`` is given. Returns immediately
+        (HTTP 202); the work runs in the server scheduler.
         """
+        params: dict[str, Any] = {"start": str(start), "end": str(end)}
+        if organization_id is not None:
+            params["organization_id"] = organization_id
         resp = requests.post(
             urljoin(self.host, "scores/recompute"),
-            params={"start": str(start), "end": str(end)},
+            params=params,
             auth=self.auth,
             timeout=self.timeout,
         )
