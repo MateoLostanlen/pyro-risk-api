@@ -21,6 +21,7 @@ api = Client(
 
 api.health()                                    # {"status": "ok"}
 api.list_cameras()                              # [{"id": 1, "name": "...", "fwi": 0.0, ...}, ...]
+api.list_cameras(organization_id=2)             # filter to one org
 api.get_camera(1)                               # {"id": 1, ...}
 api.get_scores("2026-05-04")                    # all cameras on that day
 api.get_scores("2026-05-04", camera_id=1)       # one camera on that day

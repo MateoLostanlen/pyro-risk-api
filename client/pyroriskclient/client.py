@@ -33,8 +33,11 @@ class Client:
     def health(self) -> dict:
         return self._get("health")
 
-    def list_cameras(self) -> list[dict]:
-        return self._get("cameras")
+    def list_cameras(self, organization_id: int | None = None) -> list[dict]:
+        params: dict[str, Any] = {}
+        if organization_id is not None:
+            params["organization_id"] = organization_id
+        return self._get("cameras", params=params or None)
 
     def get_camera(self, camera_id: int) -> dict:
         return self._get(f"cameras/{camera_id}")

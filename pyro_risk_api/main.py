@@ -76,31 +76,38 @@ def recompute_range(app: FastAPI, start: date_, end: date_) -> None:
         return
 
     total = 0
+    skipped = 0
     day = start
     while day <= end:
         now = datetime.now(timezone.utc)
         payload: list[dict] = []
+        day_skipped = 0
         for cam in cams:
             try:
                 value = query_fwi(cam["lat"], cam["lon"], day)
-                fwi = round(value, 3) if value is not None else None
-                cls = fwi_class(value) if value is not None else None
             except (requests.RequestException, RuntimeError) as exc:
                 logger.warning("FWI query failed cam=%s day=%s: %s", cam["id"], day, exc)
-                fwi = None
-                cls = None
+                day_skipped += 1
+                continue
+            if value is None:
+                day_skipped += 1
+                continue
             payload.append({
                 "camera_id": cam["id"],
                 "date": day,
-                "fwi": fwi,
-                "fwi_class": cls,
+                "fwi": round(value, 3),
+                "fwi_class": fwi_class(value),
                 "fetched_at": now,
             })
         _upsert_scores(payload)
-        logger.info("recomputed %d scores for %s", len(payload), day.isoformat())
+        logger.info(
+            "recomputed %d scores for %s (skipped %d)",
+            len(payload), day.isoformat(), day_skipped,
+        )
         total += len(payload)
+        skipped += day_skipped
         day += timedelta(days=1)
-    logger.info("recompute done: %d scores from %s to %s", total, start, end)
+    logger.info("recompute done: %d scores written, %d skipped, %s → %s", total, skipped, start, end)
 
 
 def refresh_cameras(app: FastAPI) -> None:
