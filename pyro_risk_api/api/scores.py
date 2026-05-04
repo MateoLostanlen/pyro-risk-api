@@ -56,7 +56,7 @@ def recompute_scores(
     from pyro_risk_api.main import recompute_range  # avoid circular import at module load
 
     scheduler = request.app.state.scheduler
-    job_id = f"recompute-{start}-{end}" + (f"-org{organization_id}" if organization_id else "")
+    job_id = f"recompute-{start}-{end}" + (f"-org{organization_id}" if organization_id is not None else "")
     scheduler.add_job(
         recompute_range,
         args=[cams, start, end],
@@ -84,7 +84,9 @@ def list_scores(
     if camera_id is not None:
         stmt = stmt.where(FWIScore.camera_id == camera_id)
     if organization_id is not None:
-        cams = request.app.state.cameras or []
+        cams = request.app.state.cameras
+        if cams is None:
+            raise HTTPException(status_code=503, detail="cameras not loaded yet")
         org_cam_ids = [c["id"] for c in cams if c["organization_id"] == organization_id]
         if not org_cam_ids:
             return []
