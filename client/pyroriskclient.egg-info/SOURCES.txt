@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-pyroriskclient/__init__.py
-pyroriskclient/client.py
-pyroriskclient.egg-info/PKG-INFO
-pyroriskclient.egg-info/SOURCES.txt
-pyroriskclient.egg-info/dependency_links.txt
-pyroriskclient.egg-info/requires.txt
-pyroriskclient.egg-info/top_level.txt
