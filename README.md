@@ -15,7 +15,7 @@ is sampled from the Copernicus EFFIS WMS layer (`mf010.fwi`, Météo-France 10 k
 | GET    | `/health`                           | none   | Liveness probe                                       |
 | GET    | `/cameras?organization_id=…`        | basic  | List cameras with current FWI; `organization_id` filter is optional |
 | GET    | `/cameras/{id}`                     | basic  | Single camera by id                                  |
-| GET    | `/scores/{date}?camera_id=…&organization_id=…` | basic | Persisted scores for a single day; both filters optional |
+| GET    | `/scores/{date}?camera_id=…&organization_id=…` | basic | Persisted scores for a single day; both filters optional. Cameras missing for `date` are computed and persisted on the fly before the response is returned |
 | POST   | `/scores/recompute?start=…&end=…&organization_id=…` | basic | Schedule a recompute over `[start, end]`; restrict to one org if given. Returns 202; runs in background |
 | GET    | `/docs`                             | none   | OpenAPI / Swagger UI                                 |
 
@@ -156,6 +156,7 @@ pyro_risk_api/
    the configured hour/minute in the configured timezone.
 3. Each refresh upserts one `(camera_id, date)` row per camera into the
    `fwi_score` table — historical scores accumulate over time.
-4. The HTTP routes are pure reads from `app.state.cameras` (current snapshot)
-   or the database (historical scores) — no upstream calls on the request
-   path.
+4. `GET /scores/{date}` lazily fills the cache: any camera missing for the
+   requested date is computed and persisted before the response is returned.
+   This means the first read of an unseen date is slow (one EFFIS query per
+   missing camera) but subsequent reads are instant.

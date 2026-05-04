@@ -80,17 +80,37 @@ def list_scores(
     organization_id: int | None = Query(None, description="Filter to a single organization"),
     session: Session = Depends(get_session),
 ) -> list[Score]:
-    stmt = select(FWIScore).where(FWIScore.date == day)
+    cams_state = request.app.state.cameras
+    has_filter = camera_id is not None or organization_id is not None
+    if has_filter and cams_state is None:
+        raise HTTPException(status_code=503, detail="cameras not loaded yet")
+
+    target_cams = list(cams_state) if cams_state is not None else []
     if camera_id is not None:
-        stmt = stmt.where(FWIScore.camera_id == camera_id)
+        target_cams = [c for c in target_cams if c["id"] == camera_id]
     if organization_id is not None:
-        cams = request.app.state.cameras
-        if cams is None:
-            raise HTTPException(status_code=503, detail="cameras not loaded yet")
-        org_cam_ids = [c["id"] for c in cams if c["organization_id"] == organization_id]
-        if not org_cam_ids:
-            return []
-        stmt = stmt.where(FWIScore.camera_id.in_(org_cam_ids))
+        target_cams = [c for c in target_cams if c["organization_id"] == organization_id]
+    if has_filter and not target_cams:
+        return []
+
+    target_ids = [c["id"] for c in target_cams]
+
+    # Compute on the fly the cameras that don't yet have a score for `day`.
+    if target_cams:
+        existing_ids = set(session.scalars(
+            select(FWIScore.camera_id).where(
+                FWIScore.date == day, FWIScore.camera_id.in_(target_ids)
+            )
+        ).all())
+        missing_cams = [c for c in target_cams if c["id"] not in existing_ids]
+        if missing_cams:
+            from pyro_risk_api.main import compute_and_persist_day  # avoid circular import
+
+            compute_and_persist_day(missing_cams, day)
+
+    stmt = select(FWIScore).where(FWIScore.date == day)
+    if target_ids:
+        stmt = stmt.where(FWIScore.camera_id.in_(target_ids))
     stmt = stmt.order_by(FWIScore.camera_id)
 
     rows = session.scalars(stmt).all()

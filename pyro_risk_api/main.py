@@ -69,41 +69,51 @@ def _persist_scores(enriched: list[dict], now: datetime) -> None:
     logger.info("persisted %d FWI scores for %s", len(payload), today.isoformat())
 
 
+def compute_and_persist_day(cams: list[dict], day: date_) -> int:
+    """Compute FWI for ``cams`` on ``day`` and upsert successful samples.
+
+    Failed lookups (transport error, EFFIS error, or nodata) are skipped so
+    they don't overwrite previously persisted values. Returns the number of
+    rows written.
+    """
+    if not cams:
+        return 0
+    now = datetime.now(timezone.utc)
+    payload: list[dict] = []
+    for cam in cams:
+        try:
+            value = query_fwi(cam["lat"], cam["lon"], day)
+        except (requests.RequestException, RuntimeError) as exc:
+            logger.warning("FWI query failed cam=%s day=%s: %s", cam["id"], day, exc)
+            continue
+        if value is None:
+            continue
+        payload.append({
+            "camera_id": cam["id"],
+            "date": day,
+            "fwi": round(value, 3),
+            "fwi_class": fwi_class(value),
+            "fetched_at": now,
+        })
+    _upsert_scores(payload)
+    return len(payload)
+
+
 def recompute_range(cams: list[dict], start: date_, end: date_) -> None:
     if not cams:
         logger.warning("recompute aborted: empty camera set")
         return
-
     total = 0
     skipped = 0
     day = start
     while day <= end:
-        now = datetime.now(timezone.utc)
-        payload: list[dict] = []
-        day_skipped = 0
-        for cam in cams:
-            try:
-                value = query_fwi(cam["lat"], cam["lon"], day)
-            except (requests.RequestException, RuntimeError) as exc:
-                logger.warning("FWI query failed cam=%s day=%s: %s", cam["id"], day, exc)
-                day_skipped += 1
-                continue
-            if value is None:
-                day_skipped += 1
-                continue
-            payload.append({
-                "camera_id": cam["id"],
-                "date": day,
-                "fwi": round(value, 3),
-                "fwi_class": fwi_class(value),
-                "fetched_at": now,
-            })
-        _upsert_scores(payload)
+        written = compute_and_persist_day(cams, day)
+        day_skipped = len(cams) - written
         logger.info(
             "recomputed %d scores for %s (skipped %d)",
-            len(payload), day.isoformat(), day_skipped,
+            written, day.isoformat(), day_skipped,
         )
-        total += len(payload)
+        total += written
         skipped += day_skipped
         day += timedelta(days=1)
     logger.info("recompute done: %d scores written, %d skipped, %s → %s", total, skipped, start, end)
