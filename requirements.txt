@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+apscheduler
+pyroclient @ git+https://github.com/pyronear/pyro-api.git@main#subdirectory=client
+numpy
+pillow
+requests
