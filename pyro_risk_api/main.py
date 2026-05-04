@@ -58,6 +58,7 @@ async def lifespan(app: FastAPI):
         CronTrigger(
             hour=settings.cameras_refresh_cron_hour,
             minute=settings.cameras_refresh_cron_minute,
+            timezone=settings.cameras_refresh_timezone,
         ),
         args=[app],
         id="refresh_cameras",
