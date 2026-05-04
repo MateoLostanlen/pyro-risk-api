@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyroriskclient"
+version = "0.1.0"
+description = "Python client for the Pyronear risk API"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Pyronear", email = "contact@pyronear.org" }]
+license = { text = "Apache-2.0" }
+dependencies = [
+    "requests>=2.31.0,<3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/MateoLostanlen/pyro-risk-api"
+Source = "https://github.com/MateoLostanlen/pyro-risk-api/tree/main/client"
+
+[tool.setuptools.packages.find]
+include = ["pyroriskclient*"]

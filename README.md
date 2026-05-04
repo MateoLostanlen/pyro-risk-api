@@ -105,6 +105,25 @@ The compose stack is meant to run on a single VPS:
 4. `docker compose up -d --build` — Traefik will request a certificate on the
    first request to `https://${API_DOMAIN}`.
 
+## Python client
+
+A tiny client lives at [`client/`](./client) and is published as
+`pyroriskclient`. Install with:
+
+```bash
+pip install "git+https://github.com/MateoLostanlen/pyro-risk-api.git#subdirectory=client"
+```
+
+```python
+from pyroriskclient import Client
+
+api = Client(host="https://riskapi.pyronear.org", username="admin", password="...")
+api.list_cameras()
+api.get_scores(start="2026-05-01", camera_id=1)
+```
+
+See [`client/README.md`](./client/README.md) for the full surface.
+
 ## Project layout
 
 ```
