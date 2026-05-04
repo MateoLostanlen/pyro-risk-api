@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     app_name: str = "pyro-risk-api"
     version: str = "0.1.0"
 
+    api_username: str = ""
+    api_password: str = ""
+
     pyro_api_host: str = "https://alertapi.pyronear.org/"
     pyro_api_username: str = ""
     pyro_api_password: str = ""

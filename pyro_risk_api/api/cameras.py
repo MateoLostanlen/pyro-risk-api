@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
-router = APIRouter(tags=["cameras"])
+from pyro_risk_api.core.auth import require_basic_auth
+
+router = APIRouter(tags=["cameras"], dependencies=[Depends(require_basic_auth)])
 
 
 class Camera(BaseModel):

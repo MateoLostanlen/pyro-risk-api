@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    image: pyro-risk-api:latest
+    container_name: pyro-risk-api
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
