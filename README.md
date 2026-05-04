@@ -15,7 +15,7 @@ is sampled from the Copernicus EFFIS WMS layer (`mf010.fwi`, Météo-France 10 k
 | GET    | `/health`                           | none   | Liveness probe                                       |
 | GET    | `/cameras`                          | basic  | List all cameras with current FWI                    |
 | GET    | `/cameras/{id}`                     | basic  | Single camera by id                                  |
-| GET    | `/scores?start=…&end=…&camera_id=…` | basic  | Persisted scores; date range and camera filter (`end` defaults to today, `camera_id` optional) |
+| GET    | `/scores/{date}?camera_id=…`        | basic  | Persisted scores for a single day; `camera_id` filter is optional |
 | GET    | `/docs`                             | none   | OpenAPI / Swagger UI                                 |
 
 Each camera payload:
@@ -119,7 +119,7 @@ from pyroriskclient import Client
 
 api = Client(host="https://riskapi.pyronear.org", username="admin", password="...")
 api.list_cameras()
-api.get_scores(start="2026-05-01", camera_id=1)
+api.get_scores("2026-05-04", camera_id=1)
 ```
 
 See [`client/README.md`](./client/README.md) for the full surface.
@@ -132,7 +132,7 @@ pyro_risk_api/
 ├── api/
 │   ├── health.py        # GET /health
 │   ├── cameras.py       # GET /cameras, GET /cameras/{id} (auth-protected)
-│   └── scores.py        # GET /scores (range + optional camera filter)
+│   └── scores.py        # GET /scores/{date} (single day, optional camera filter)
 ├── core/
 │   ├── config.py        # pydantic-settings, .env loader
 │   ├── auth.py          # Basic-auth dependency

@@ -41,20 +41,16 @@ class Client:
 
     def get_scores(
         self,
-        start: date | str,
-        end: date | str | None = None,
+        day: date | str,
         camera_id: int | None = None,
     ) -> list[dict]:
-        """Return persisted FWI scores.
+        """Return persisted FWI scores for a single day.
 
         Args:
-            start: inclusive start date (ISO ``YYYY-MM-DD`` or ``date``).
-            end: inclusive end date. Defaults server-side to today (UTC).
+            day: ISO ``YYYY-MM-DD`` string or ``date`` (UTC).
             camera_id: filter to a single camera id.
         """
-        params: dict[str, Any] = {"start": str(start)}
-        if end is not None:
-            params["end"] = str(end)
+        params: dict[str, Any] = {}
         if camera_id is not None:
             params["camera_id"] = camera_id
-        return self._get("scores", params=params)
+        return self._get(f"scores/{day}", params=params or None)

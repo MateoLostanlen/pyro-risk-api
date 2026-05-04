@@ -28,20 +28,16 @@ def get_session():
         session.close()
 
 
-@router.get("/scores", response_model=list[Score])
+@router.get("/scores/{day}", response_model=list[Score])
 def list_scores(
-    start: date_ = Query(..., description="Inclusive start date (YYYY-MM-DD)"),
-    end: date_ | None = Query(None, description="Inclusive end date (defaults to today UTC)"),
+    day: date_,
     camera_id: int | None = Query(None, description="Filter to a single camera"),
     session: Session = Depends(get_session),
 ) -> list[Score]:
-    if end is None:
-        end = datetime.now(timezone.utc).date()
-
-    stmt = select(FWIScore).where(FWIScore.date >= start, FWIScore.date <= end)
+    stmt = select(FWIScore).where(FWIScore.date == day)
     if camera_id is not None:
         stmt = stmt.where(FWIScore.camera_id == camera_id)
-    stmt = stmt.order_by(FWIScore.date, FWIScore.camera_id)
+    stmt = stmt.order_by(FWIScore.camera_id)
 
     rows = session.scalars(stmt).all()
     out: list[Score] = []

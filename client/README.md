@@ -22,8 +22,8 @@ api = Client(
 api.health()                                    # {"status": "ok"}
 api.list_cameras()                              # [{"id": 1, "name": "...", "fwi": 0.0, ...}, ...]
 api.get_camera(1)                               # {"id": 1, ...}
-api.get_scores(start="2026-05-01")              # all cameras, 2026-05-01 → today (UTC)
-api.get_scores(start="2026-05-01", camera_id=1) # one camera, range
+api.get_scores("2026-05-04")                    # all cameras on that day
+api.get_scores("2026-05-04", camera_id=1)       # one camera on that day
 ```
 
 All methods return parsed JSON. Errors (4xx/5xx) raise
