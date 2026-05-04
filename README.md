@@ -73,11 +73,15 @@ curl -u admin:changeme http://127.0.0.1:8000/cameras
 
 ## Run with Docker
 
+The compose file ships a Traefik reverse proxy that terminates TLS via
+Let's Encrypt (TLS-ALPN challenge on port 443) and exposes only the API on
+the public domain.
+
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
-Or build and run manually:
+For a quick local run without Traefik, build and run the image directly:
 
 ```bash
 docker build -t pyro-risk-api .
@@ -86,6 +90,17 @@ docker run --rm -p 8000:8000 --env-file .env pyro-risk-api
 
 The image is multi-stage (Python 3.12 slim), runs as a non-root user, and
 ships a `HEALTHCHECK` hitting `/health`.
+
+## Deployment
+
+The compose stack is meant to run on a single VPS:
+
+1. Point a DNS A record for `API_DOMAIN` (default `riskapi.pyronear.org`) at
+   the server's public IP (e.g. `57.128.107.129`).
+2. Open ports `80` and `443` on the host firewall.
+3. Set `LETSENCRYPT_EMAIL` and the auth credentials in `.env`.
+4. `docker compose up -d --build` — Traefik will request a certificate on the
+   first request to `https://${API_DOMAIN}`.
 
 ## Project layout
 

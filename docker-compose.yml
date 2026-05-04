@@ -1,9 +1,40 @@
 services:
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-letsencrypt:/letsencrypt
+
   api:
     build: .
     image: pyro-risk-api:latest
     container_name: pyro-risk-api
     restart: unless-stopped
     env_file: .env
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.riskapi.rule=Host(`${API_DOMAIN}`)
+      - traefik.http.routers.riskapi.entrypoints=websecure
+      - traefik.http.routers.riskapi.tls=true
+      - traefik.http.routers.riskapi.tls.certresolver=le
+      - traefik.http.services.riskapi.loadbalancer.server.port=8000
+
+volumes:
+  traefik-letsencrypt:
